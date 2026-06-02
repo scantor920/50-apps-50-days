@@ -1,0 +1,44 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run Vendor Dashboard",
+      "type": "shell",
+      "command": "${workspaceFolder}/streamlit-vendor-dashboard/.venv/Scripts/streamlit.exe",
+      "args": [
+        "run",
+        "${workspaceFolder}/streamlit-vendor-dashboard/app.py"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/streamlit-vendor-dashboard"
+      },
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Detailed Expense App",
+      "type": "shell",
+      "command": "${workspaceFolder}/streamlit-vendor-dashboard/.venv/Scripts/streamlit.exe",
+      "args": [
+        "run",
+        "${workspaceFolder}/Detailed Expense App V1.0/app.py"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/Detailed Expense App V1.0"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

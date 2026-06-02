@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World Clock</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 2.5rem;
+            font-weight: 300;
+            letter-spacing: 2px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        button {
+            background: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        button.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            padding: 12px 16px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            width: 200px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        input[type="text"]::placeholder {
+            color: #999;
+        }
+
+        .clocks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .clock-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .clock-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .day-night-indicator {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 2rem;
+        }
+
+        .city-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            padding-right: 60px;
+        }
+
+        .time-display {
+            font-size: 2.8rem;
+            font-weight: 300;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .timezone {
+            font-size: 0.9rem;
+            color: #999;
+            margin-bottom: 15px;
+        }
+
+        .remove-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .remove-btn:hover {
+            background: #ff5252;
+            transform: scale(1.05);
+        }
+
+        .remove-btn.hidden {
+            display: none;
+        }
+
+        /* ── Weather Tile ── */
+        .weather-tile {
+            margin-top: 18px;
+            padding: 16px;
+            background: linear-gradient(135deg, rgba(102,126,234,0.07) 0%, rgba(118,75,162,0.07) 100%);
+            border-radius: 12px;
+            border: 1px solid rgba(102,126,234,0.18);
+        }
+
+        .weather-loading, .weather-error {
+            text-align: center;
+            padding: 10px 0;
+            font-size: 0.85rem;
+            color: #bbb;
+        }
+
+        .weather-error { color: #ff8a80; }
+
+        .weather-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .weather-temp-block {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .weather-temp-f {
+            font-size: 2rem;
+            font-weight: 300;
+            color: #667eea;
+            line-height: 1;
+        }
+
+        .weather-temp-c {
+            font-size: 1rem;
+            color: #aaa;
+        }
+
+        .weather-condition-icon {
+            font-size: 2rem;
+        }
+
+        .weather-condition-desc {
+            font-size: 0.82rem;
+            color: #666;
+            margin-bottom: 12px;
+            font-style: italic;
+        }
+
+        .weather-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .weather-detail {
+            background: rgba(255,255,255,0.6);
+            border-radius: 8px;
+            padding: 8px 10px;
+        }
+
+        .weather-detail-label {
+            font-size: 0.7rem;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin-bottom: 3px;
+        }
+
+        .weather-detail-value {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #444;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            input[type="text"] {
+                width: 100%;
+            }
+
+            .clocks-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .time-display {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⏰ World Clock</h1>
+
+        <div class="controls">
+            <div class="control-group">
+                <button class="format-btn" data-format="12">12-Hour</button>
+                <button class="format-btn active" data-format="24">24-Hour</button>
+            </div>
+            <div class="control-group input-group">
+                <input type="text" id="cityInput" placeholder="Enter a city (e.g., Tokyo, Paris)">
+                <button id="addBtn">Add City</button>
+            </div>
+        </div>
+
+        <div class="clocks-grid" id="clocksGrid">
+            <!-- Clock cards will be inserted here -->
+        </div>
+    </div>
+
+    <script>
+        // Default cities with their timezones and coordinates
+        let cities = [
+            { name: 'New York',  timezone: 'America/New_York',  coords: [40.7128, -74.0060] },
+            { name: 'London',    timezone: 'Europe/London',     coords: [51.5074,  -0.1278] },
+            { name: 'Singapore', timezone: 'Asia/Singapore',    coords: [ 1.3521, 103.8198] }
+        ];
+
+        let timeFormat = 24; // 12 or 24 hour format
+
+        // ── Weather ────────────────────────────────────────────
+        // key: "lat,lon"  value: { data, timestamp } | { data:null, timestamp }
+        const weatherCache = {};
+        const WEATHER_TTL = 10 * 60 * 1000; // 10 minutes
+
+        const WMO = {
+             0: ['Clear sky',             '☀️'],
+             1: ['Mainly clear',          '🌤️'],
+             2: ['Partly cloudy',         '⛅'],
+             3: ['Overcast',              '☁️'],
+            45: ['Fog',                  '🌫️'],
+            48: ['Icy fog',              '🌫️'],
+            51: ['Light drizzle',        '🌦️'],
+            53: ['Drizzle',              '🌦️'],
+            55: ['Heavy drizzle',        '🌧️'],
+            61: ['Light rain',           '🌧️'],
+            63: ['Rain',                 '🌧️'],
+            65: ['Heavy rain',           '🌧️'],
+            71: ['Light snow',           '🌨️'],
+            73: ['Snow',                 '❄️'],
+            75: ['Heavy snow',           '❄️'],
+            77: ['Snow grains',          '🌨️'],
+            80: ['Light showers',        '🌦️'],
+            81: ['Showers',              '🌧️'],
+            82: ['Violent showers',      '⛈️'],
+            85: ['Snow showers',         '🌨️'],
+            86: ['Heavy snow showers',   '❄️'],
+            95: ['Thunderstorm',         '⛈️'],
+            96: ['Thunderstorm + hail',  '⛈️'],
+            99: ['Severe thunderstorm',  '⛈️'],
+        };
+
+        function wmoInfo(code) {
+            return WMO[code] || ['Unknown', '🌡️'];
+        }
+
+        function cToF(c) { return (c * 9 / 5 + 32).toFixed(1); }
+
+        async function fetchWeather(lat, lon) {
+            const key = `${lat},${lon}`;
+            const now = Date.now();
+            const cached = weatherCache[key];
+            if (cached && now - cached.timestamp < WEATHER_TTL) return cached.data;
+            try {
+                const url = `https://api.open-meteo.com/v1/forecast` +
+                    `?latitude=${lat}&longitude=${lon}` +
+                    `&current=temperature_2m,precipitation,cloud_cover,wind_speed_10m,weather_code` +
+                    `&wind_speed_unit=mph`;
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('bad response');
+                const json = await res.json();
+                const c = json.current;
+                const data = {
+                    tempC:   c.temperature_2m,
+                    tempF:   parseFloat(cToF(c.temperature_2m)),
+                    precip:  c.precipitation,
+                    cloud:   c.cloud_cover,
+                    wind:    c.wind_speed_10m,
+                    code:    c.weather_code,
+                };
+                weatherCache[key] = { data, timestamp: now };
+                return data;
+            } catch {
+                weatherCache[key] = { data: null, timestamp: now };
+                return null;
+            }
+        }
+
+        async function fetchAllWeather() {
+            await Promise.all(cities
+                .filter(city => city.coords)
+                .map(city => {
+                    const [lat, lon] = city.coords;
+                    const key = `${lat},${lon}`;
+                    if (weatherCache[key]) weatherCache[key].timestamp = 0; // bust cache
+                    return fetchWeather(lat, lon);
+                })
+            );
+            renderClocks();
+        }
+
+        function buildWeatherTile(city) {
+            if (!city.coords) return '';
+            const [lat, lon] = city.coords;
+            const key = `${lat},${lon}`;
+            const cached = weatherCache[key];
+            if (!cached) return '<div class="weather-tile"><div class="weather-loading">⏳ Loading weather…</div></div>';
+            if (!cached.data) return '<div class="weather-tile"><div class="weather-error">⚠️ Weather unavailable</div></div>';
+            const w = cached.data;
+            const [desc, icon] = wmoInfo(w.code);
+            return `
+                <div class="weather-tile">
+                    <div class="weather-header">
+                        <div class="weather-temp-block">
+                            <span class="weather-temp-f">${w.tempF}°F</span>
+                            <span class="weather-temp-c">${w.tempC}°C</span>
+                        </div>
+                        <span class="weather-condition-icon">${icon}</span>
+                    </div>
+                    <div class="weather-condition-desc">${desc}</div>
+                    <div class="weather-details">
+                        <div class="weather-detail">
+                            <div class="weather-detail-label">Precipitation</div>
+                            <div class="weather-detail-value">💧 ${w.precip} mm</div>
+                        </div>
+                        <div class="weather-detail">
+                            <div class="weather-detail-label">Cloud Cover</div>
+                            <div class="weather-detail-value">☁️ ${w.cloud}%</div>
+                        </div>
+                        <div class="weather-detail">
+                            <div class="weather-detail-label">Wind Speed</div>
+                            <div class="weather-detail-value">💨 ${w.wind} mph</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        // ── End Weather ────────────────────────────────────────────
+
+        // Common timezone + coordinate mappings
+        const cityData = {
+            'new york':     { tz: 'America/New_York',            coords: [ 40.7128,  -74.0060] },
+            'ny':           { tz: 'America/New_York',            coords: [ 40.7128,  -74.0060] },
+            'los angeles':  { tz: 'America/Los_Angeles',         coords: [ 34.0522, -118.2437] },
+            'la':           { tz: 'America/Los_Angeles',         coords: [ 34.0522, -118.2437] },
+            'chicago':      { tz: 'America/Chicago',             coords: [ 41.8781,  -87.6298] },
+            'denver':       { tz: 'America/Denver',              coords: [ 39.7392, -104.9903] },
+            'london':       { tz: 'Europe/London',               coords: [ 51.5074,   -0.1278] },
+            'paris':        { tz: 'Europe/Paris',                coords: [ 48.8566,    2.3522] },
+            'berlin':       { tz: 'Europe/Berlin',               coords: [ 52.5200,   13.4050] },
+            'dubai':        { tz: 'Asia/Dubai',                  coords: [ 25.2048,   55.2708] },
+            'delhi':        { tz: 'Asia/Kolkata',                coords: [ 28.6139,   77.2090] },
+            'mumbai':       { tz: 'Asia/Kolkata',                coords: [ 19.0760,   72.8777] },
+            'bangkok':      { tz: 'Asia/Bangkok',                coords: [ 13.7563,  100.5018] },
+            'singapore':    { tz: 'Asia/Singapore',              coords: [  1.3521,  103.8198] },
+            'hong kong':    { tz: 'Asia/Hong_Kong',              coords: [ 22.3193,  114.1694] },
+            'tokyo':        { tz: 'Asia/Tokyo',                  coords: [ 35.6762,  139.6503] },
+            'sydney':       { tz: 'Australia/Sydney',            coords: [-33.8688,  151.2093] },
+            'auckland':     { tz: 'Pacific/Auckland',            coords: [-36.8509,  174.7645] },
+            'toronto':      { tz: 'America/Toronto',             coords: [ 43.6532,  -79.3832] },
+            'mexico city':  { tz: 'America/Mexico_City',         coords: [ 19.4326,  -99.1332] },
+            'são paulo':    { tz: 'America/Sao_Paulo',           coords: [-23.5505,  -46.6333] },
+            'buenos aires': { tz: 'America/Argentina/Buenos_Aires', coords: [-34.6037, -58.3816] },
+            'moscow':       { tz: 'Europe/Moscow',               coords: [ 55.7558,   37.6173] },
+            'istanbul':     { tz: 'Europe/Istanbul',             coords: [ 41.0082,   28.9784] },
+        };
+
+        function getCityInfo(cityName) {
+            return cityData[cityName.toLowerCase().trim()] || null;
+        }
+
+        // Check if it's daytime (6 AM - 6 PM)
+        function isDaytime(date) {
+            const hours = date.getHours();
+            return hours >= 6 && hours < 18;
+        }
+
+        // Get day/night emoji
+        function getDayNightIndicator(date) {
+            return isDaytime(date) ? '☀️' : '🌙';
+        }
+
+        // Format time based on preference
+        function formatTime(date, format) {
+            let hours = date.getHours();
+            let minutes = date.getMinutes();
+            let seconds = date.getSeconds();
+
+            // Pad with zeros
+            minutes = String(minutes).padStart(2, '0');
+            seconds = String(seconds).padStart(2, '0');
+
+            if (format === 12) {
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12 || 12; // Convert 0 to 12
+                hours = String(hours).padStart(2, '0');
+                return `${hours}:${minutes}:${seconds} ${ampm}`;
+            } else {
+                hours = String(hours).padStart(2, '0');
+                return `${hours}:${minutes}:${seconds}`;
+            }
+        }
+
+        // Create a clock card
+        function createClockCard(city, index) {
+            const date = new Date(new Date().toLocaleString('en-US', { timeZone: city.timezone }));
+            const formattedTime = formatTime(date, timeFormat);
+            const dayNightIndicator = getDayNightIndicator(date);
+            const isRemovable = index >= 3;
+
+            return `
+                <div class="clock-card">
+                    <div class="day-night-indicator">${dayNightIndicator}</div>
+                    <div class="city-name">${city.name}</div>
+                    <div class="time-display">${formattedTime}</div>
+                    <div class="timezone">${city.timezone}</div>
+                    ${buildWeatherTile(city)}
+                    <button class="remove-btn ${!isRemovable ? 'hidden' : ''}" onclick="removeCity(${index})">Remove</button>
+                </div>
+            `;
+        }
+
+        // Render all clocks
+        function renderClocks() {
+            const grid = document.getElementById('clocksGrid');
+            grid.innerHTML = cities.map((city, index) => createClockCard(city, index)).join('');
+        }
+
+        // Add a new city
+        async function addCity() {
+            const input = document.getElementById('cityInput');
+            const cityName = input.value.trim();
+
+            if (!cityName) {
+                alert('Please enter a city name');
+                return;
+            }
+
+            const info = getCityInfo(cityName);
+            if (!info) {
+                alert(`Sorry, I don't recognize "${cityName}". Try a major city like "Tokyo", "Paris", or "Sydney".`);
+                return;
+            }
+
+            if (cities.some(c => c.timezone === info.tz)) {
+                alert('This city is already in your clock');
+                return;
+            }
+
+            const displayName = cityName.charAt(0).toUpperCase() + cityName.slice(1);
+            cities.push({ name: displayName, timezone: info.tz, coords: info.coords });
+            input.value = '';
+            renderClocks();
+            // Fetch weather for new city
+            if (info.coords) {
+                await fetchWeather(...info.coords);
+                renderClocks();
+            }
+        }
+
+        // Remove a city
+        function removeCity(index) {
+            if (index < 3) {
+                alert('You cannot remove the default cities');
+                return;
+            }
+            cities.splice(index, 1);
+            renderClocks();
+        }
+
+        // Update time format
+        function setTimeFormat(format) {
+            timeFormat = parseInt(format);
+            document.querySelectorAll('.format-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.format === format);
+            });
+            renderClocks();
+        }
+
+        // Event listeners
+        document.getElementById('addBtn').addEventListener('click', addCity);
+        document.getElementById('cityInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addCity();
+        });
+
+        document.querySelectorAll('.format-btn').forEach(btn => {
+            btn.addEventListener('click', () => setTimeFormat(btn.dataset.format));
+        });
+
+        // Initial render, fetch weather, then update every second
+        // Show loading placeholders immediately
+        renderClocks();
+        // Fetch weather in background, re-render when done
+        fetchAllWeather();
+        // Refresh weather every 10 minutes
+        setInterval(fetchAllWeather, 10 * 60 * 1000);
+        // Update clocks every second
+        setInterval(renderClocks, 1000);
+    </script>
+</body>
+</html>

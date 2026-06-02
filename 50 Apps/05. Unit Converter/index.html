@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unit Converter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1a1a2e;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: #16213e;
+            border-radius: 12px;
+            padding: 40px;
+            width: 420px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #e94560;
+            font-size: 28px;
+        }
+
+        .category-buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .category-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background-color: #0f3460;
+            color: #ffffff;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+
+        .category-btn.active {
+            background-color: #e94560;
+        }
+
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: #a8b2d8;
+            font-size: 14px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #0f3460;
+            background-color: #0f3460;
+            color: #ffffff;
+            font-size: 16px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #e94560;
+        }
+
+        .units-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .units-row .input-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .convert-btn {
+            width: 100%;
+            padding: 14px;
+            background-color: #e94560;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .convert-btn:hover {
+            background-color: #c73652;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #0f3460;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #e94560;
+            min-height: 70px;
+        }
+
+        .result span {
+            font-size: 14px;
+            color: #a8b2d8;
+            display: block;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Unit Converter</h1>
+
+        <div class="category-buttons">
+            <button class="category-btn active" onclick="setCategory('distance')">Distance</button>
+            <button class="category-btn" onclick="setCategory('weight')">Weight</button>
+            <button class="category-btn" onclick="setCategory('temperature')">Temperature</button>
+        </div>
+
+        <div class="input-group">
+            <label>Enter Value</label>
+            <input type="number" id="inputValue" placeholder="Enter a number..." oninput="convert()">
+        </div>
+
+        <div class="units-row">
+            <div class="input-group">
+                <label>From</label>
+                <select id="fromUnit" onchange="convert()"></select>
+            </div>
+            <div class="input-group">
+                <label>To</label>
+                <select id="toUnit" onchange="convert()"></select>
+            </div>
+        </div>
+
+        <div class="result" id="result">
+            Enter a value above
+            <span id="resultLabel"></span>
+        </div>
+    </div>
+
+    <script>
+        const units = {
+            distance: ['Miles', 'Kilometers', 'Meters', 'Feet', 'Inches'],
+            weight: ['Pounds', 'Kilograms', 'Grams', 'Ounces'],
+            temperature: ['Fahrenheit', 'Celsius', 'Kelvin']
+        };
+
+        let currentCategory = 'distance';
+
+        function setCategory(category) {
+            currentCategory = category;
+
+            // Update active button
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Populate dropdowns
+            populateDropdowns();
+            convert();
+        }
+
+        function populateDropdowns() {
+            const fromUnit = document.getElementById('fromUnit');
+            const toUnit = document.getElementById('toUnit');
+            fromUnit.innerHTML = '';
+            toUnit.innerHTML = '';
+
+            units[currentCategory].forEach(unit => {
+                fromUnit.innerHTML += `<option value="${unit}">${unit}</option>`;
+                toUnit.innerHTML += `<option value="${unit}">${unit}</option>`;
+            });
+
+            // Default to second option for "To"
+            toUnit.selectedIndex = 1;
+        }
+
+        function toBase(value, unit) {
+            // Convert everything to a base unit first
+            const conversions = {
+                // Distance → base: meters
+                'Miles': v => v * 1609.344,
+                'Kilometers': v => v * 1000,
+                'Meters': v => v,
+                'Feet': v => v * 0.3048,
+                'Inches': v => v * 0.0254,
+                // Weight → base: grams
+                'Pounds': v => v * 453.592,
+                'Kilograms': v => v * 1000,
+                'Grams': v => v,
+                'Ounces': v => v * 28.3495,
+                // Temperature → base: Kelvin
+                'Fahrenheit': v => (v - 32) * 5/9 + 273.15,
+                'Celsius': v => v + 273.15,
+                'Kelvin': v => v
+            };
+            return conversions[unit](value);
+        }
+
+        function fromBase(value, unit) {
+            // Convert from base unit to target
+            const conversions = {
+                // Distance from meters
+                'Miles': v => v / 1609.344,
+                'Kilometers': v => v / 1000,
+                'Meters': v => v,
+                'Feet': v => v / 0.3048,
+                'Inches': v => v / 0.0254,
+                // Weight from grams
+                'Pounds': v => v / 453.592,
+                'Kilograms': v => v / 1000,
+                'Grams': v => v,
+                'Ounces': v => v / 28.3495,
+                // Temperature from Kelvin
+                'Fahrenheit': v => (v - 273.15) * 9/5 + 32,
+                'Celsius': v => v - 273.15,
+                'Kelvin': v => v
+            };
+            return conversions[unit](value);
+        }
+
+        function convert() {
+            const inputValue = parseFloat(document.getElementById('inputValue').value);
+            const fromUnit = document.getElementById('fromUnit').value;
+            const toUnit = document.getElementById('toUnit').value;
+            const resultDiv = document.getElementById('result');
+            const resultLabel = document.getElementById('resultLabel');
+
+            if (isNaN(inputValue)) {
+                resultDiv.childNodes[0].textContent = 'Enter a value above';
+                resultLabel.textContent = '';
+                return;
+            }
+
+            const baseValue = toBase(inputValue, fromUnit);
+            const result = fromBase(baseValue, toUnit);
+
+            resultDiv.childNodes[0].textContent = result.toFixed(4);
+            resultLabel.textContent = `${inputValue} ${fromUnit} = ${result.toFixed(4)} ${toUnit}`;
+        }
+
+        // Initialize on load
+        populateDropdowns();
+    </script>
+</body>
+</html>

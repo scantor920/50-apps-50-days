@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Countdown Timer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1a1a2e;
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        .container {
+            text-align: center;
+            max-width: 640px;
+            width: 100%;
+        }
+
+        .event-label {
+            color: #a8b2d8;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 12px;
+        }
+
+        h1 {
+            color: #e94560;
+            font-size: 36px;
+            margin-bottom: 8px;
+        }
+
+        .event-date {
+            color: #a8b2d8;
+            font-size: 16px;
+            margin-bottom: 48px;
+        }
+
+        .countdown-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 48px;
+        }
+
+        .time-box {
+            background-color: #16213e;
+            border-radius: 12px;
+            padding: 28px 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        .time-value {
+            color: #e94560;
+            font-size: 52px;
+            font-weight: bold;
+            line-height: 1;
+            margin-bottom: 8px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .time-label {
+            color: #a8b2d8;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .divider {
+            border: none;
+            border-top: 1px solid #16213e;
+            margin: 0 0 40px 0;
+        }
+
+        .customize {
+            background-color: #16213e;
+            border-radius: 12px;
+            padding: 28px;
+            text-align: left;
+        }
+
+        .customize h2 {
+            color: #a8b2d8;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        label {
+            color: #a8b2d8;
+            font-size: 13px;
+        }
+
+        input {
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid #0f3460;
+            background-color: #0f3460;
+            color: #ffffff;
+            font-size: 15px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #e94560;
+        }
+
+        .set-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #e94560;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            cursor: pointer;
+            margin-top: 16px;
+            transition: background-color 0.2s;
+        }
+
+        .set-btn:hover {
+            background-color: #c73652;
+        }
+
+        .finished {
+            color: #4ecca3;
+            font-size: 24px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="event-label">Counting down to</div>
+        <h1 id="eventTitle">Pinehurst Trip</h1>
+        <div class="event-date" id="eventDateDisplay">November 1, 2027</div>
+
+        <div class="countdown-grid">
+            <div class="time-box">
+                <div class="time-value" id="days">--</div>
+                <div class="time-label">Days</div>
+            </div>
+            <div class="time-box">
+                <div class="time-value" id="hours">--</div>
+                <div class="time-label">Hours</div>
+            </div>
+            <div class="time-box">
+                <div class="time-value" id="minutes">--</div>
+                <div class="time-label">Minutes</div>
+            </div>
+            <div class="time-box">
+                <div class="time-value" id="seconds">--</div>
+                <div class="time-label">Seconds</div>
+            </div>
+        </div>
+
+        <div class="customize">
+            <h2>Set a Different Countdown</h2>
+            <div class="form-row">
+                <div class="input-group">
+                    <label>Event Name</label>
+                    <input type="text" id="inputTitle" placeholder="e.g. Augusta Trip">
+                </div>
+                <div class="input-group">
+                    <label>Target Date</label>
+                    <input type="date" id="inputDate">
+                </div>
+            </div>
+            <button class="set-btn" onclick="setCountdown()">Set Countdown</button>
+        </div>
+    </div>
+
+    <script>
+        // Default target — Pinehurst November 2027
+        let targetDate = new Date('2027-11-01T00:00:00');
+        let intervalId = null;
+
+        function pad(number) {
+            return String(number).padStart(2, '0');
+        }
+
+        function tick() {
+            const now = new Date();
+            const diff = targetDate - now;
+
+            if (diff <= 0) {
+                document.getElementById('days').textContent = '00';
+                document.getElementById('hours').textContent = '00';
+                document.getElementById('minutes').textContent = '00';
+                document.getElementById('seconds').textContent = '00';
+                return;
+            }
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            document.getElementById('days').textContent = pad(days);
+            document.getElementById('hours').textContent = pad(hours);
+            document.getElementById('minutes').textContent = pad(minutes);
+            document.getElementById('seconds').textContent = pad(seconds);
+        }
+
+        function startTimer() {
+            if (intervalId) clearInterval(intervalId);
+            tick();
+            intervalId = setInterval(tick, 1000);
+        }
+
+        function setCountdown() {
+            const title = document.getElementById('inputTitle').value.trim();
+            const dateVal = document.getElementById('inputDate').value;
+
+            if (!title || !dateVal) {
+                alert('Please enter both an event name and date.');
+                return;
+            }
+
+            targetDate = new Date(dateVal + 'T00:00:00');
+            document.getElementById('eventTitle').textContent = title;
+            document.getElementById('eventDateDisplay').textContent = targetDate.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+
+            startTimer();
+        }
+
+        // Kick off on load
+        startTimer();
+    </script>
+</body>
+</html>
